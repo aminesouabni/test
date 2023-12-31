@@ -1,0 +1,63 @@
+# Default values for operator.
+
+# Application deployment context
+context: 
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: operator
+  # Application name (functionnal tenant, default use Chart name)
+  app: crw-operator
+  # Version name of this application (default use Chart appVersion)
+  version: "v2.3.0"
+
+# enable the basic chart globally
+enabled: true
+# Configuration of the subscription
+subscription:
+  # enable deployment of the subscription
+  enabled: true
+  # name of the subscription (mandatory)
+  name: "codeready-workspaces"
+  # namespace of the subscription (mandatory)
+  namespace: "openshift-workspaces"
+  # subscription is started as an helm hook (default is false)
+  hooked: false
+  # version of the operator to deploy
+  version: "v2.3.0"
+  # Configuration of the CRW operator
+  operator: 
+    # The CRW channel to use (default is 'latest')
+    channel: latest
+    # name of the operator (if not set, use the subscription name)
+    name: codeready-workspaces
+    # name of the operator (will be used with version to generate the target CSV)
+    # csv: crwoperator
+    # Approval mode for the operator update (Automatic or Manual)
+    installPlanApproval: Automatic
+    # source of the operator
+    source: 
+      # name of the operator source (default is 'redhat-operators')
+      name: redhat-operators
+      # namespace of the operator (default is 'openshift-marketplace')
+      namespace: openshift-marketplace
+      # specific operator configuration
+    config: {}
+# Configuration of the subscription
+operatorGroup:
+  # enable deployment of an operatorGroup for the subscription
+  enabled: true
+  # name of the operatorGroup (if not set, use the subscription name)
+  name: "codeready-workspaces"
+  # operatorGroup is started as an helm hook (default is false)
+  hooked: false
+  # scope of the target (if set to all-ns operatorGroup is global, otherwise is namespaced)
+  # target: "all-ns"
+  # namespace of the operatorGroup (if not set, use the subscription namespace)
+  namespace: "openshift-workspaces"
+  # List of the provided APIs (mandatory if enabled)
+  providedAPIs: "CheCluster.v1.org.eclipse.che"

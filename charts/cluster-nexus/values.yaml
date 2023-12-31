@@ -1,0 +1,71 @@
+# Default values for cluster-nexus.
+
+# Application deployment context
+context:  &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-nexus
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# Deploy an API manager
+nexus:
+  # Enable the configuration of the API manager
+  enabled: true
+  # Activate the manager as a helm hook
+  hooked: true
+  # Name of the deployed instance of NexusConfig
+  name: default
+  # The applyed Nexus config specifications
+  spec: |
+    daemonNodeSelector:
+      node-role.kubernetes.io/worker: ""
+
+
+# Configuration of the project (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: false
+    hooked: false
+    type: project
+    name: "startx-nexus"
+    display_name: Operator NEXUS
+    description: Nexus configured by STARTX
+
+# Configuration of the operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "nxrm-operator-certified"
+    namespace: "startx-nexus"
+    version: "v3.41.0-1"
+    operator: 
+      channel: stable
+      name: nxrm-operator-certified
+      installPlanApproval: Automatic
+      # csv: nxrm-operator-certified
+      source: 
+        name: certified-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: false
+    hooked: false
+    # target: "all-ns"
+    name: "startx-nexus"
+    namespace: "startx-nexus" 
+    providedAPIs: "NexusRepo.v1alpha1.sonatype.com"
+

@@ -1,0 +1,170 @@
+{{- if .Values.machineSet.enabled }}
+{{- $root := . -}}
+{{- $clusterid := .Values.cluster.id | default "default-xxxxx" -}}
+{{- $region := .Values.cluster.region | default "eu-west-3" -}}
+{{ range .Values.machineSet.list }}
+---
+apiVersion: machine.openshift.io/v1beta1
+kind: MachineSet
+metadata:
+  name: "{{ .name }}"
+  labels:
+    {{- include "cluster-machine.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: "{{ .name }}-machineset"
+    machine.openshift.io/cluster-api-cluster: "{{ $root.Values.cluster.id }}"
+    machine.openshift.io/cluster-api-machine-role: "{{ .type }}"
+    {{- if .group }}
+    machine.startx.io/group: "{{ .group }}"
+    {{- end }}
+    machine.openshift.io/cluster-api-machine-type: "{{ .type }}"
+  namespace: openshift-machine-api
+  annotations:
+    {{- include "cluster-machine.annotations" $root | nindent 4 }}
+spec:
+  replicas: {{ .replicas }}
+  selector:
+    matchLabels:
+      machine.openshift.io/cluster-api-machineset: "{{ .name }}"
+  template:
+    metadata:
+      labels:
+        machine.openshift.io/cluster-api-machine-role: "{{ .type }}"
+        machine.openshift.io/cluster-api-machine-type: "{{ .type }}"
+        machine.openshift.io/cluster-api-machineset: "{{ .name }}"
+        {{- if .group }}
+        machine.startx.io/group: "{{ .group }}"
+        {{- end }}
+        {{- if .additionnalsLabels -}}
+        {{- .additionnalsLabels | nindent 8 -}}
+        {{- end }}
+    spec:
+      metadata:
+        labels:
+          {{- if eq .type "infra" }}
+          node-role.kubernetes.io/infra: ""
+          {{- else if eq .type "storage" }}
+          node-role.kubernetes.io/storage: ""
+          cluster.ocs.openshift.io/openshift-storage: ""
+          {{- else if eq .type "virt" }}
+          node-role.kubernetes.io/virt: ""
+          {{- else }}
+          node-role.kubernetes.io/worker: ""
+          {{- if .group }}
+          "node-role.kubernetes.io/{{ .group }}": ""
+          {{- else }}
+          node-role.kubernetes.io/app: ""
+          {{- end }}
+          "node-role.startx.io/{{ .group | default "app" }}": ""
+          {{ end }}
+          {{- if .additionnalsLabels -}}
+          {{- .additionnalsLabels | nindent 10 -}}
+          {{- end }}
+          {{- if .group }}
+          machine.startx.io/group: "{{ .group }}"
+          {{- end }}
+      {{- if .additionnalsTaints }}
+      taints: 
+        {{- .additionnalsTaints | nindent 8 -}}
+        {{- if eq .type "infra" -}}
+        - key: "node-role.kubernetes.io/infra"
+          effect: NoSchedule
+        {{- else if eq .type "virt" -}}
+        - key: "node-role.kubernetes.io/virt"
+          effect: NoSchedule
+        {{- else if eq .type "storage" -}}
+        - key: "node-role.kubernetes.io/storage"
+          effect: NoSchedule
+        {{ end }}
+      {{- else }}
+      {{- if eq .type "infra" }}
+      taints: 
+        - key: "node-role.kubernetes.io/infra"
+          effect: NoSchedule
+      {{- else if eq .type "virt" }}
+      taints: 
+        - key: "node-role.kubernetes.io/virt"
+          effect: NoSchedule
+      {{- else if eq .type "storage" }}
+      taints: 
+        - key: "node-role.kubernetes.io/storage"
+          effect: NoSchedule
+      {{ end }}
+      {{ end }}
+      providerSpec:
+        value:
+          {{- if eq .provider "vsphere" }}
+          apiVersion: machine.openshift.io/v1beta1
+          kind: VSphereMachineProviderSpec
+          metadata:
+            creationTimestamp: null
+          numCoresPerSocket: {{ .numCoresPerSocket | default 4 }}
+          numCPUs: {{ .numCPUs | default 4 }}
+          diskGiB: {{ .diskGiB | default 120 }}
+          memoryMiB: {{ .memoryMiB | default 16384 }}
+          snapshot: ''
+          credentialsSecret:
+            name: vsphere-cloud-credentials
+          userDataSecret:
+            name: worker-user-data
+          network:
+            devices:
+              - networkName: {{ .networkName | default "default_vlan" | quote }}
+          workspace:
+            datacenter: {{ .datacenter | default "OpenShift" | quote }}
+            datastore: {{ .datastore | default "mydatastore" | quote }}
+            folder: {{ .folder | default (printf "/%s/vm/%s" .datastore $root.Values.cluster.id) | quote }}
+            resourcePool: {{ .resourcePool | default (printf "/%s/host/%s/Resources" .datastore .datastore) | quote }}
+            server: {{ .server | default "vcsa.pragmatik.local" | quote }}
+          template: {{ .template | default (printf "%s-rhcos" $root.Values.cluster.id) | quote }}
+          {{- else }}
+          apiVersion: awsproviderconfig.openshift.io/v1beta1
+          kind: AWSMachineProviderConfig
+          instanceType: "{{ .instanceType }}"
+          placement:
+            availabilityZone: "{{ $root.Values.cluster.region }}{{ .az }}"
+            region: "{{ $root.Values.cluster.region }}"
+          ami:
+            id: {{ .ami }}
+          {{- if .blockDevices }}
+          blockDevices:
+            {{- .blockDevices | nindent 12 }}
+          {{- else }}
+          blockDevices:
+            - ebs:
+                iops: 0
+                volumeSize: {{ .volumeSize | default 1 }}
+                volumeType: {{ .volumeType | default "gp3" | quote }}
+          {{ end }}
+          credentialsSecret:
+            name: aws-cloud-credentials
+          deviceIndex: 0
+          iamInstanceProfile:
+            id: "{{ $root.Values.cluster.id }}-worker-profile"
+          securityGroups:
+            - filters:
+                - name: tag:Name
+                  values:
+                    - "{{ $root.Values.cluster.id }}-worker-sg"
+          subnet:
+          {{- if .subnet_name }}
+            filters:
+              - name: tag:Name
+                values:
+                  - "{{ .subnet_name }}"
+                  # - "{{ $root.Values.cluster.id }}-worker-subnet"
+          {{- else if .subnet_id }}
+            id: "{{ .subnet_id }}"
+          {{- else }}
+            filters:
+              - name: tag:Name
+                values:
+                  - "{{ $root.Values.cluster.id }}-private-{{ $root.Values.cluster.region }}{{ .az }}"
+          {{ end }}
+          tags: 
+            - name: kubernetes.io/cluster/{{ $root.Values.cluster.id }}
+              value: owned
+          userDataSecret:
+            name: worker-user-data
+          {{ end }}
+{{ end }}
+{{ end }}

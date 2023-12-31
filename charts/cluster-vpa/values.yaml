@@ -1,0 +1,69 @@
+# Default values for cluster-vpa.
+
+# Application deployment context
+context:  &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-vpa
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# Deploy an API manager
+vpa:
+  # Enable the configuration of the API manager
+  enabled: true
+  # Activate the manager as a helm hook
+  hooked: true
+  # Name of the deployed instance of VerticalPodAutoscalerConfig
+  name: default
+  # The applyed VerticalPodAutoscaler config specifications
+  spec: |
+    daemonNodeSelector:
+      node-role.kubernetes.io/worker: ""
+
+
+# Configuration of the project (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: false
+    hooked: false
+    type: namespace
+    name: "openshift-vpa"
+    display_name: Operator VPA
+    description: VerticalPodAutoscaler configured by STARTX
+
+# Configuration of the operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "vertical-pod-autoscaler"
+    namespace: "openshift-vertical-pod-autoscaler"
+    version: "4.12.0-202302061916"
+    operator: 
+      channel: "stable"
+      name: vertical-pod-autoscaler
+      installPlanApproval: Automatic
+      # csv: verticalpodautoscaler
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: true
+    hooked: false
+    name: "openshift-vpa"
+    namespace: "openshift-vertical-pod-autoscaler"
+    providedAPIs: "VerticalPodAutoscaler.v1.autoscaling.k8s.io,VerticalPodAutoscalerCheckpoint.v1.autoscaling.k8s.io,VerticalPodAutoscalerController.v1.autoscaling.openshift.io"

@@ -1,0 +1,236 @@
+# Default values for configuration of a STARTX cluster
+# see values.yaml for explanation on each params
+context: &context
+  scope: startx
+  cluster: default
+  environment: infra
+  component: oadp
+  app: startx-oadp
+oadp:
+  enabled: false
+  dataProtectionApplication:
+    enabled: true
+    name: cluster-pfd
+    spec: |
+      backupImages: true
+      backupLocations:
+        - velero:
+            config:
+              profile: mccaas
+              region: eu-west-3
+            credential:
+              key: cloud
+              name: cloud-credentials-pfd
+            default: true
+            objectStorage:
+              bucket: pfd-backup2
+              prefix: velero
+            provider: aws
+        - velero:
+            config:
+              profile: mccaas
+              region: eu-west-3
+            credential:
+              key: cloud
+              name: cloud-credentials-pfd
+            default: false
+            objectStorage:
+              bucket: pfd-backup2-new
+              prefix: velero
+            provider: aws
+      configuration:
+        restic:
+          enable: true
+        velero:
+          defaultPlugins:
+            - openshift
+            - aws
+            # - csi
+          podConfig:
+            resourceAllocations:
+              limits:
+                cpu: '1'
+                memory: 1024Mi
+              requests:
+                cpu: 500m
+                memory: 512Mi
+      snapshotLocations:
+        - velero:
+            config:
+              profile: mccaas
+              region: eu-west-3
+            provider: aws
+        - velero:
+            config:
+              profile: mccaas
+              region: eu-west-3
+            provider: aws
+  schedule:
+    enabled: true
+    list:
+    - name: daily-data-platform
+      spec:
+        schedule: "0 1 * * *"
+        template:
+          defaultVolumesToRestic: true
+          includeClusterResources: false
+          hooks: {}
+          includedNamespaces:
+            - data-platform-*
+            - fiware
+            - gitlab-runner
+            - gitlab-system
+          storageLocation: cluster-pfd-1
+          ttl: 0h58m0s
+    - name: weekly-data-platform
+      spec:
+        schedule: "0 4 * * 0"
+        template:
+          defaultVolumesToRestic: true
+          includeClusterResources: false
+          hooks: {}
+          includedNamespaces:
+            - data-platform-*
+            - fiware
+            - gitlab-runner
+            - gitlab-system
+          storageLocation: cluster-pfd-1
+          ttl: 0h58m0s
+    - name: daily-cluster-infra
+      spec:
+        schedule: "0 2 * * *"
+        template:
+          defaultVolumesToRestic: true
+          includeClusterResources: true
+          hooks: {}
+          includedNamespaces:
+            - openshift-*
+            - demo-*
+            - startx-*
+            - startx
+            - default
+          excludedNamespaces:
+            - openshift-etcd
+          storageLocation: cluster-pfd-1
+          ttl: 0h58m0s
+    - name: daily-cluster-etcd
+      spec:
+        schedule: "0 3 * * *"
+        template:
+          defaultVolumesToRestic: true
+          includeClusterResources: false
+          hooks: {}
+          includedNamespaces:
+            - openshift-etcd
+          storageLocation: cluster-pfd-1
+          ttl: 0h58m0s
+    - name: weekly-cluster-etcd
+      spec:
+        schedule: "0 3 * * 0"
+        template:
+          defaultVolumesToRestic: true
+          includeClusterResources: false
+          hooks: {}
+          includedNamespaces:
+            - openshift-etcd
+          storageLocation: cluster-pfd-1
+          ttl: 0h58m0s
+  backups:
+    enabled: true
+    list:
+    - name: manual-data-platform
+      spec:
+        csiSnapshotTimeout: 5m
+        defaultVolumesToRestic: true
+        hooks: {}
+        includedNamespaces:
+          - data-platform-*
+          - fiware
+          - gitlab-runner
+          - gitlab-system
+        metadata: {}
+        storageLocation: cluster-pfd-1
+        ttl: 0h30m0s
+        volumeSnapshotLocations:
+          - cluster-pfd-1
+  restore:
+    enabled: true
+    list:
+    - name: manual-data-platform
+      spec:
+        csiSnapshotTimeout: 5m
+        defaultVolumesToRestic: true
+        hooks: {}
+        includedNamespaces:
+          - data-platform-*
+          - fiware
+          - gitlab-runner
+          - gitlab-system
+        metadata: {}
+        storageLocation: cluster-pfd-1
+        ttl: 0h30m0s
+        volumeSnapshotLocations:
+          - cluster-pfd-1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+cloudcreds:
+  enabled: false
+  name: "cloud-credentials-pfd"
+  spec: |-
+    [mccaas]
+    aws_access_key_id=XXXXXXXXX
+    aws_secret_access_key=XXXXXXXXXXXXXXX
+
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: true
+    hooked: false
+    type: namespace
+    name: "openshift-adp"
+    display_name: "Startx OADP"
+    requester: startx
+    description: Openshift Application Data Protection configured by STARTX
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "redhat-oadp-operator"
+    namespace: "openshift-adp"
+    version: "v1.1.5"
+    operator: 
+      channel: "stable"
+      name: redhat-oadp-operator
+      installPlanApproval: Automatic
+      # csv: oadp-operator
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: true
+    hooked: false
+    name: "openshift-adp"
+    namespace: "openshift-adp"
+    providedAPIs: "Backup.v1.velero.io,BackupStorageLocation.v1.velero.io,CloudStorage.v1alpha1.oadp.openshift.io,DataProtectionApplication.v1alpha1.oadp.openshift.io,DeleteBackupRequest.v1.velero.io,DownloadRequest.v1.velero.io,PodVolumeBackup.v1.velero.io,PodVolumeRestore.v1.velero.io,ResticRepository.v1.velero.io,Restore.v1.velero.io,Schedule.v1.velero.io,ServerStatusRequest.v1.velero.io,VolumeSnapshotBackup.v1alpha1.datamover.oadp.openshift.io,VolumeSnapshotLocation.v1.velero.io,VolumeSnapshotRestore.v1alpha1.datamover.oadp.openshift.io"

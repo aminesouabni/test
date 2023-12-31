@@ -1,0 +1,76 @@
+{{- if .Values.istio.enabled }}
+{{- $root := . -}}
+{{- $namespace := .Values.project.project.name | default "default-istio" -}}
+---
+kind: ServiceMeshControlPlane
+apiVersion: maistra.io/v2
+metadata:
+  name: {{ .Values.istio.name | default "basic" | quote }}
+  namespace: "{{- $namespace -}}"
+  labels:
+    {{- include "cluster-istio.labels" . | nindent 4 }}
+    app.kubernetes.io/name: "{{ .Values.istio.name | default "basic" }}-istioconfig"
+  annotations:
+    {{- include "cluster-istio.annotations" . | nindent 4 }}
+    {{- if .Values.istio.hooked }}
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: hook-failed
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookFailed
+    {{- end }}
+    argocd.argoproj.io/sync-wave: "10"
+    startx.fr/help: https://docs.openshift.com/container-platform/4.5/service_mesh/service_mesh_install/customizing-installation-ossm.html
+spec:
+  version: "v2.1"
+  telemetry:
+    type: Istiod
+  policy:
+    type: Istiod
+  general:
+    logging:
+      logAsJSON: true
+  runtime:
+    defaults:
+      container:
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+            ephemeral-storage: 50Mi
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+            ephemeral-storage: 200Mi
+  gateways:
+    enabled: true
+    openshiftRoute:
+      enabled: true
+  tracing:
+    sampling: 10000
+    type: Jaeger
+  addons:
+    grafana:
+      enabled: true
+      install:
+        service:
+          ingress:
+            enabled: true
+    jaeger:
+      install:
+        ingress:
+          enabled: true
+        storage:
+          memory:
+            maxTraces: 1000
+          type: Memory
+    kiali:
+      enabled: true
+      install:
+        dashboard:
+          enableGrafana: true
+          enablePrometheus: true
+          enableTracing: true
+    prometheus:
+      enabled: true
+{{- end }}

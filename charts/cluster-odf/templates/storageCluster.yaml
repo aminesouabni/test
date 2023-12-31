@@ -1,0 +1,61 @@
+{{- if .Values.odf.enabled -}}
+{{- $root := . -}}
+{{- $namespace := .Values.project.project.name | default "openshift-storage" -}}
+---
+kind: StorageCluster
+apiVersion: odf.openshift.io/v1
+metadata:
+  name: {{ .Values.odf.name | default "default" | quote }}
+  namespace: "{{- $namespace -}}"
+  labels:
+    {{- include "cluster-odf.labels" . | nindent 4 }}
+    app.kubernetes.io/name: "{{ .Values.odf.name | default "odf" }}-storagecluster"
+  annotations:
+    {{- include "cluster-odf.annotations" . | nindent 4 }}
+    {{- if .Values.odf.hooked }}
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: hook-failed
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookFailed
+    {{- end }}
+    argocd.argoproj.io/sync-wave: "10"
+    uninstall.odf.openshift.io/cleanup-policy: delete
+    uninstall.odf.openshift.io/mode: graceful
+  finalizers:
+    - storagecluster.odf.openshift.io
+spec:
+  version: {{ .Values.odf.version | default "4.7.0" | quote }}
+  arbiter: {}
+  encryption:
+    kms: {}
+  externalStorage: {}
+  managedResources:
+    cephBlockPools: {}
+    cephConfig: {}
+    cephFilesystems: {}
+    cephObjectStoreUsers: {}
+    cephObjectStores: {}
+  nodeTopologies: {}
+  storageDeviceSets:
+{{- range .Values.odf.storage }}
+    - name: {{ .name | default "default-deviceset" | quote }}
+      replica: {{ int .replicas | default 3 }}
+      count: 1
+      config: {}
+      resources: {}
+      placement: {}
+      preparePlacement: {}
+      portable: true
+      dataPVCTemplate:
+        metadata: {}
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: {{ .size | default "512Gi" | quote }}
+          storageClassName: {{ .storageClass | default "gp3-csi" | quote }}
+          volumeMode: Block
+{{- end }}
+{{- end -}}

@@ -1,0 +1,32 @@
+{{- if .Values.istio.members -}}{{- if .Values.istio.members.enabled -}}
+{{- $root := . -}}
+{{- range .Values.istio.members.list }}
+{{- $namespace := .namespace | default "default" }}
+---
+kind: ServiceMeshMember
+apiVersion: maistra.io/v1
+metadata:
+  name: default
+  namespace: "{{- $namespace -}}"
+  labels:
+    {{- include "cluster-istio.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: "default-{{ $namespace }}-servicemeshmember"
+  annotations:
+    {{- include "cluster-istio.annotations" $root | nindent 4 }}
+    {{- if $root.Values.istio.hooked }}
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: hook-failed
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookFailed
+    {{- end }}
+    argocd.argoproj.io/sync-wave: "10"
+  finalizers:
+    - maistra.io/istio-operator
+spec:
+  controlPlaneRef:
+    name: "{{ .controlePlane | default "basic-install" }}"
+    namespace: "{{ .controlePlaneNS | default "istio-system" }}"
+{{- end }}
+{{- end }}{{- end }}
+

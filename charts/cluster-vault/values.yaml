@@ -1,0 +1,74 @@
+# Default values for cluster-vault.
+
+# Application deployment context
+context: &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-vault
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# Configuration of the project (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: true
+    type: project
+    name: default-vault
+    display_name: Operator VAULT
+    description: Vault storage & control plane configured by startx
+  rbac: 
+    enabled: true
+    user: 
+    - id: vault-sa-edit
+      name: system:serviceaccount:default-vault:{{ .Release.name }}
+      role: edit
+    - id: vault-agent-injector-sa-admin
+      name: system:serviceaccount:default-vault:{{ .Release.name }}-agent-injector
+      role: admin
+  networkpolicy: 
+    enabled: false
+  limits: 
+    enabled: false
+  quotas: 
+    enabled: false
+
+
+# Configuration of the route
+route: 
+  # Enable creating a route to expose vault gui
+  enabled: false
+  # The service binded to the route (default is vault-ui)
+  service: "vault-ui"
+
+# Configuration of the operator (see https://github.com/hashicorp/vault-helm)
+vault:
+  # Available parameters and their default values for the Vault chart, see https://github.com/hashicorp/vault-helm/blob/main/values.yaml
+  server:
+    image:
+      repository: "registry.connect.redhat.com/hashicorp/vault"
+      tag: "1.9.0-ubi"
+    ha:
+      enabled: true
+      replicas: 3
+    dev:
+      enabled: true
+  global:
+    openshift: true
+  injector:
+    image:
+      repository: "registry.connect.redhat.com/hashicorp/vault-k8s"
+      tag: "0.14.1-ubi"
+
+    agentImage:
+      repository: "registry.connect.redhat.com/hashicorp/vault"
+      tag: "1.9.0-ubi"

@@ -1,0 +1,64 @@
+{{- if .Values.hyperconvergedCluster }}{{- if .Values.hyperconvergedCluster.enabled }}
+---
+kind: HyperConverged
+apiVersion: hco.kubevirt.io/v1beta1
+metadata:
+  name: {{ .Values.hyperconvergedCluster.name | default "kubevirt-hyperconverged" | quote }}
+  namespace: {{ .Values.project.project.name }}
+  labels:
+    {{- include "cluster-kubevirt.labels" . | nindent 4 }}
+    app.kubernetes.io/name: "{{- .Values.hyperconvergedCluster.name | default "kubevirt-cluster" -}}-hyperconverged"
+    app: {{ .Values.hyperconvergedCluster.name | default "kubevirt-hyperconverged" | quote }}
+  annotations:
+    {{- include "cluster-kubevirt.annotations" . | nindent 4 }}
+    {{- if .Values.hyperconvergedCluster.hooked }}
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "10"
+    helm.sh/hook-delete-policy: hook-failed
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookFailed
+    {{- end }}
+    argocd.argoproj.io/sync-wave: "10"
+spec:
+  liveMigrationConfig:
+    bandwidthPerMigration: 64Mi
+    completionTimeoutPerGiB: 800
+    parallelMigrationsPerCluster: 5
+    parallelOutboundMigrationsPerNode: 2
+    progressTimeout: 150
+  certConfig:
+    ca:
+      duration: 48h0m0s
+      renewBefore: 24h0m0s
+    server:
+      duration: 24h0m0s
+      renewBefore: 12h0m0s
+  # featureGates:
+  #   sriovLiveMigration: false
+  #   withHostPassthroughCPU: false
+  # bareMetalPlatform: true
+  # infra: {}
+  # localStorageClassName: {{ .Values.hyperconvergedCluster.storageClass | default "gp3-csi" | quote }}
+  # version: {{ .Values.operator.subscription.version | default "v4.11.0" | quote }}
+  # workloads: {}
+{{- end }}{{- end }}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

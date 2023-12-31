@@ -1,0 +1,69 @@
+# Default values for cluster-compliance.
+
+# Application deployment context
+context:  &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-compliance
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# Deploy an API manager
+compliance:
+  # Enable the configuration of the API manager
+  enabled: true
+  # Activate the manager as a helm hook
+  hooked: true
+  # Name of the deployed instance of ComplianceConfig
+  name: default
+  # The applyed Compliance config specifications
+  spec: |
+    daemonNodeSelector:
+      node-role.kubernetes.io/worker: ""
+
+
+# Configuration of the project (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: false
+    hooked: false
+    type: project
+    name: "compliance-operator"
+    display_name: Operator COMPLIANCE
+    description: Compliance configured by STARTX
+
+# Configuration of the operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: false
+    hooked: false
+    name: "compliance-operator"
+    namespace: "openshift-compliance"
+    version: "v0.1.53"
+    operator: 
+      channel: "release-0.1"
+      name: compliance-operator
+      installPlanApproval: Automatic
+      # csv: compliance-operator
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: false
+    hooked: false
+    name: "startx-compliance"
+    namespace: "openshift-compliance"
+    providedAPIs: "ComplianceCheckResult.v1alpha1.compliance.openshift.io,ComplianceRemediation.v1alpha1.compliance.openshift.io,ComplianceScan.v1alpha1.compliance.openshift.io,ComplianceSuite.v1alpha1.compliance.openshift.io,Profile.v1alpha1.compliance.openshift.io,ProfileBundle.v1alpha1.compliance.openshift.io,Rule.v1alpha1.compliance.openshift.io,ScanSetting.v1alpha1.compliance.openshift.io,ScanSettingBinding.v1alpha1.compliance.openshift.io,TailoredProfile.v1alpha1.compliance.openshift.io,Variable.v1alpha1.compliance.openshift.io"

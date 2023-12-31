@@ -1,0 +1,102 @@
+# Default values for cluster-3scale.
+
+# Application deployment context
+context: &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-3scale
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# Deploy an API manager
+manager:
+  # Enable the configuration of the API manager
+  enabled: true
+  # Activate the manager as a helm hook
+  hooked: true
+
+
+# Configuration of the project (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: true
+    type: project
+    name: example-3scale
+    display_name: 3SCALE Example
+    description: 3Scale enterprise api-management & control plane example from STARTX
+  rbac: 
+    enabled: false
+  networkpolicy: 
+    enabled: false
+  limits: 
+    enabled: false
+  quotas: 
+    enabled: false
+  serviceAccounts:
+    enabled: false
+    list: 
+      - name: default
+        imagePullSecrets: 
+          - name: registrycreds-rhn
+  dockercfg:
+    enabled: false
+    list: 
+      - name: registrycreds-rhn
+        registry: registry.redhat.io
+        username: myuser
+        password: mypass
+        email: "my@example.com"
+
+# Configuration of the projectOperator (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+projectOperator: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: false
+    type: project
+    name: "3scale-operators"
+    display_name: Operator 3SCALE
+    description: 3SCALE operators configured by startx
+  rbac: 
+    enabled: false
+  networkpolicy: 
+    enabled: false
+  limits: 
+    enabled: false
+  quotas: 
+    enabled: false
+
+# Configuration of the operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    name: "3scale-operator"
+    namespace: "openshift-operators"
+    version: "v0.10.5"
+    operator: 
+      channel: threescale-2.13
+      name: 3scale-operator
+      installPlanApproval: Automatic
+      # csv: 3scale-operator
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: false
+    name: "3scale-operator"
+    namespace: "3scale-operators"
+    providedAPIs: "APIManager.v1alpha1.apps.3scale.net,APIManagerBackup.v1alpha1.apps.3scale.net,APIManagerRestore.v1alpha1.apps.3scale.net,ActiveDoc.v1beta1.capabilities.3scale.net,Backend.v1beta1.capabilities.3scale.net,CustomPolicyDefinition.v1beta1.capabilities.3scale.net,DeveloperAccount.v1beta1.capabilities.3scale.net,DeveloperUser.v1beta1.capabilities.3scale.net,OpenAPI.v1beta1.capabilities.3scale.net,Product.v1beta1.capabilities.3scale.net,ProxyConfigPromote.v1beta1.capabilities.3scale.net"

@@ -1,0 +1,235 @@
+# Default values for cluster-couchbase.
+
+# Application deployment context
+context:  &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-couchbase
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# Configure the couchbase envionment
+couchbaseConfig:
+  # Enable the configuration of the couchbase environement
+  enabled: true
+  # Configuration of the serviceAccount for pod deployment
+  saPods: 
+    # Enable existence of the serviceAccount for pod deployment
+    enabled: false
+    # name of the serviceAccount for pod deployment
+    name: couchbase-pods
+  # Configuration of the serviceAccount for backup jobs
+  saBackup: 
+    # Enable existence of the serviceAccount for backup deployment
+    enabled: false
+    # name of the serviceAccount for backup deployment
+    name: couchbase-backup
+  # Configuration of the imagePull credentials
+  # imageCredentialsSecret: registrycreds-rhn
+
+# Configure the loaders pod
+loader:
+  # Enable the configuration of the couchbase workloader
+  enabled: false
+  # List of loader to deploy
+  list: []
+  #   # name of the loader
+  # - name: default
+  #   # Command to execute for the test
+  #   command: | 
+  #     #!/bin/bash
+  #     echo "write your workload generator script using cbworkloadgen ..." 
+  #     exit 0;
+
+# Configure the couchbase envionment
+cluster:
+  # Enable the configuration of the couchbase environement
+  enabled: false
+  # List of cluster to deploy
+  list: []
+  #   # name of the cluster
+  # - name: default-cluster
+  #   # Enable the creation and deployment of this cluster
+  #   enabled: true
+  #   # administration credentials
+  #   admin:
+  #     # administrator username
+  #     username: "administrator"
+  #     # administrator username
+  #     password: "administrator123"
+  #   # configure how to expose the web-console 
+  #   expose:
+  #     # Enable the exposure of the web-console using the router
+  #     enabled: true
+  #   # spec of the cluster configuration
+  #   spec: |
+  #     image: registry.connect.redhat.com/couchbase/server:7.0.3-1
+  #     paused: false
+  #     antiAffinity: true
+  #     softwareUpdateNotifications: true
+  #     securityContext:
+  #       runAsUser: 1000
+  #       runAsNonRoot: true
+  #       fsGroup: 1000
+  #     security:
+  #       adminSecret: default-cluster-admin-auth
+  #       rbac:
+  #         managed: true
+  #         selector:
+  #           matchLabels:
+  #             cluster: default-cluster
+  #     networking:
+  #       exposeAdminConsole: true
+  #       adminConsoleServices:
+  #       - data
+  #     buckets:
+  #       managed: true
+  #       selector:
+  #         matchLabels:
+  #           cluster: default-cluster
+  #     logging:
+  #       logRetentionTime: 604800s
+  #       logRetentionCount: 20
+  #     backup:
+  #       managed: false
+  #     volumeClaimTemplates:
+  #     - metadata:
+  #         name: couchbase
+  #       spec:
+  #         storageClassName: "gp3-csi"
+  #         resources:
+  #           requests:
+  #             storage: 2Gi
+  #     cluster:
+  #       clusterName: default-cluster
+  #       dataServiceMemoryQuota: 750Mi
+  #       indexServiceMemoryQuota: 256Mi
+  #       searchServiceMemoryQuota: 256Mi
+  #       eventingServiceMemoryQuota: 256Mi
+  #       analyticsServiceMemoryQuota: 1Gi
+  #       indexStorageSetting: memory_optimized
+  #       autoFailoverTimeout: 120s
+  #       autoFailoverMaxCount: 3
+  #       autoFailoverOnDataDiskIssues: true
+  #       autoFailoverOnDataDiskIssuesTimePeriod: 120s
+  #       autoFailoverServerGroup: false
+  #     servers:
+  #     - name: all_services
+  #       size: 3
+  #       services:
+  #       - data
+  #       - index
+  #       - query
+  #       - search
+  #       - eventing
+  #       - analytics
+  #       volumeMounts:
+  #         default: couchbase
+  #         data:  couchbase
+  #         index: couchbase
+  #         analytics:
+  #         - couchbase
+  #         - couchbase
+  #       pod:
+  #         metadata:
+  #           labels:
+  #             couchbase_services: all
+  #           annotations:
+  #             couchbase.startx.fr: default
+  #         spec:
+  #           automountServiceAccountToken: false
+  #           serviceAccountName: couchbase-pods
+  #           imagePullSecrets:
+  #             - name: "startx-couchbase-rhn"
+  #   buckets: 
+  #     # name of the bucket
+  #   - name: "default-bucket"
+  #     # kind of bucket (could be couchbase, ephemeral or memcached)
+  #     kind: couchbase
+  #     # spec of the cluster configuration
+  #     spec: |
+  #       memoryQuota: 128Mi
+  #       replicas: 2
+  #       ioPriority: low
+  #       evictionPolicy: valueOnly
+  #       conflictResolution: lww
+  #       enableFlush: true
+  #       enableIndexReplica: true
+  #       compressionMode: passive
+
+
+# Configure the couchbase RBAC
+clusterRbac:
+  # Enable the configuration of the couchbase RBAC
+  enabled: false
+  # List of group and associated role
+  groups: []
+  #   # name of the group
+  # - name: default-group
+  #   # name of the cluster related to this group
+  # - cluster: default-cluster
+  #   # Specification of the group (roles)
+  #   spec: |
+  #     roles:
+  #     - name: bucket_admin
+  #       bucket: default
+  # List of group and associated role
+  users: []
+  #   # name of the user
+  # - name: user
+  #   # password of the user
+  #   password: secret123
+  #   # name of the cluster related to this user
+  # - cluster: default-cluster
+  #   # Full name of the user
+  #   fullName: "Default USER"
+  #   # name of the authDomain (default to local)
+  #   backend: local
+  #   # Group associated to this user
+  #   group: default-group
+
+# Configuration of the project (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: true
+    hooked: false
+    type: project
+    name: "openshift-startx-couchbase"
+    display_name: "Startx COUCHBASE"
+    description: Startx Couchbase configured by STARTX
+
+# Configuration of the operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "couchbase-enterprise-certified"
+    namespace: "openshift-startx-couchbase"
+    version: "v2.4.2-1"
+    operator: 
+      channel: stable
+      name: couchbase-enterprise-certified
+      installPlanApproval: Automatic
+      # csv: couchbase-operator
+      source: 
+        name: certified-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: true
+    hooked: false
+    name: "couchbase-operator-v2"
+    namespace: "openshift-startx-couchbase"
+    providedAPIs: "CouchbaseAutoscaler.v2.couchbase.com,CouchbaseBackup.v2.couchbase.com,CouchbaseBackupRestore.v2.couchbase.com,CouchbaseBucket.v2.couchbase.com,CouchbaseCluster.v2.couchbase.com,CouchbaseCollection.v2.couchbase.com,CouchbaseCollectionGroup.v2.couchbase.com,CouchbaseEphemeralBucket.v2.couchbase.com,CouchbaseGroup.v2.couchbase.com,CouchbaseMemcachedBucket.v2.couchbase.com,CouchbaseMigrationReplication.v2.couchbase.com,CouchbaseReplication.v2.couchbase.com,CouchbaseRoleBinding.v2.couchbase.com,CouchbaseScope.v2.couchbase.com,CouchbaseScopeGroup.v2.couchbase.com,CouchbaseUser.v2.couchbase.com"

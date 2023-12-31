@@ -1,0 +1,23 @@
+{{- if .Values.kEventing }}{{- if .Values.kEventing.enabled }}
+{{- $root := . -}}
+{{- $namespace := .Values.projectKEventing.project.name | default "default-knative" -}}
+kind: KnativeEventing
+apiVersion: operator.knative.dev/v1beta1
+metadata:
+  name: {{ .Values.kEventing.name | default "knative-eventing" | quote }}
+  namespace: "{{- $namespace -}}"
+  labels:
+    {{- include "cluster-knative.labels" . | nindent 4 }}
+    app.kubernetes.io/name: "{{ .Values.kEventing.name | default "knative-eventing" }}-knativeeventing"
+  annotations:
+    {{- include "cluster-knative.annotations" . | nindent 4 }}
+    {{- if .Values.kEventing.hooked }}
+    helm.sh/hook: post-install,post-upgrade
+    helm.sh/hook-weight: "8"
+    helm.sh/hook-delete-policy: hook-failed
+    argocd.argoproj.io/hook: PostSync
+    argocd.argoproj.io/hook-delete-policy: HookFailed
+    {{- end }}
+    argocd.argoproj.io/sync-wave: "8"
+spec: {}
+{{- end }}{{- end }}

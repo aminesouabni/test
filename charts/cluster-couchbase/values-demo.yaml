@@ -1,0 +1,125 @@
+# Default values for configuration of a STARTX cluster
+# see values.yaml for explanation on each params
+context: &context
+  scope: startx
+  cluster: default
+  environment: infra
+  component: couchbase
+  app: demo-couchbase
+
+couchbaseConfig:
+  enabled: false
+  saPods: 
+    enabled: true
+    name: couchbase-pods
+  saBackup: 
+    enabled: true
+    name: couchbase-backup
+  imageCredentialsSecret: startx-registrycreds-rhn
+
+loader:
+  enabled: false
+  list:
+  - name: venus
+    command: | 
+      #!/bin/bash
+      WORKLOAD_CONF=" --threads=5 -r .6 -i 120000 -s 75000 --json"
+      CREDS=" -u administrator -p administrator123"
+      CLUSTER=venus-cluster
+      BUCKET=yellow-back-bucket
+      echo "Load $CLUSTER : Bucket $BUCKET"
+      cbworkloadgen -n ${CLUSTER}:8091 ${CREDS} -b ${BUCKET} ${WORKLOAD_CONF} 
+      BUCKET=orange-bucket
+      echo "Load $CLUSTER : Bucket $BUCKET"
+      cbworkloadgen -n ${CLUSTER}:8091 ${CREDS} -b ${BUCKET} ${WORKLOAD_CONF} 
+      echo "End of the ${CLUSTER} workload test"
+      exit 0;
+  - name: jupiter
+    command: | 
+      #!/bin/bash
+      WORKLOAD_CONF=" --threads=5 -r .6 -i 4000000 -s 15000 --json"
+      CREDS=" -u administrator -p administrator123"
+      CLUSTER=jupiter-cluster
+      BUCKET=orange-back-bucket
+      echo "Load $CLUSTER : Bucket $BUCKET"
+      cbworkloadgen -n ${CLUSTER}:8091 ${CREDS} -b ${BUCKET} ${WORKLOAD_CONF} 
+      BUCKET=yellow-bucket
+      echo "Load $CLUSTER : Bucket $BUCKET"
+      cbworkloadgen -n ${CLUSTER}:8091 ${CREDS} -b ${BUCKET} ${WORKLOAD_CONF} 
+      BUCKET=black-bucket
+      echo "Load $CLUSTER : Bucket $BUCKET"
+      cbworkloadgen -n ${CLUSTER}:8091 ${CREDS} -b ${BUCKET} ${WORKLOAD_CONF} 
+      echo "End of the ${CLUSTER} workload test"
+      exit 0;
+  - name: mercury
+    command: | 
+      #!/bin/bash
+      WORKLOAD_CONF=" --threads=1 -r .6 -i 600000 -s 1000 --json"
+      CREDS=" -u administrator -p administrator123"
+      CLUSTER=mercury-cluster
+      BUCKET=purple-bucket
+      echo "Load $CLUSTER : Bucket $BUCKET"
+      cbworkloadgen -n ${CLUSTER}:8091 ${CREDS} -b ${BUCKET} ${WORKLOAD_CONF} 
+      echo "End of the ${CLUSTER} workload test"
+      exit 0;
+
+cluster:
+  enabled: false
+  list: []
+
+clusterRbac:
+  enabled: false
+  groups: []
+  users: []
+
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: true
+    hooked: false
+    type: project
+    name: "demo-couchbase"
+    display_name: "Demo COUCHBASE"
+    requester: startx
+    description: Demo Couchbase configured by STARTX
+  serviceAccounts:
+    enabled: true
+    list: 
+      - name: default
+        imagePullSecrets: 
+          - name: startx-registrycreds-rhn
+  dockercfg:
+    enabled: true
+    list: 
+      - name: startx-registrycreds-rhn
+        registry: registry.connect.redhat.com
+        username: startx_cl
+        password: xxxx
+        email: "cl@startx.fr"
+
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "couchbase-enterprise-certified"
+    namespace: "openshift-startx-couchbase"
+    version: "v2.4.2-1"
+    operator: 
+      channel: stable
+      name: couchbase-enterprise-certified
+      installPlanApproval: Automatic
+      # csv: couchbase-operator
+      source: 
+        name: certified-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: true
+    hooked: false
+    name: "couchbase-operator-v2"
+    namespace: "openshift-startx-couchbase"
+    providedAPIs: "CouchbaseAutoscaler.v2.couchbase.com,CouchbaseBackup.v2.couchbase.com,CouchbaseBackupRestore.v2.couchbase.com,CouchbaseBucket.v2.couchbase.com,CouchbaseCluster.v2.couchbase.com,CouchbaseCollection.v2.couchbase.com,CouchbaseCollectionGroup.v2.couchbase.com,CouchbaseEphemeralBucket.v2.couchbase.com,CouchbaseGroup.v2.couchbase.com,CouchbaseMemcachedBucket.v2.couchbase.com,CouchbaseMigrationReplication.v2.couchbase.com,CouchbaseReplication.v2.couchbase.com,CouchbaseRoleBinding.v2.couchbase.com,CouchbaseScope.v2.couchbase.com,CouchbaseScopeGroup.v2.couchbase.com,CouchbaseUser.v2.couchbase.com"

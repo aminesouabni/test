@@ -1,0 +1,38 @@
+{{- if .Values.enabled }}{{- if .Values.operatorGroup }}{{- if .Values.operatorGroup.enabled }}
+{{- $name := .Values.operatorGroup.name | default .Values.subscription.name -}}
+{{- $namespace := .Values.operatorGroup.namespace | default .Values.subscription.namespace -}}
+{{- $providedAPIs := .Values.operatorGroup.providedAPIs -}}
+---
+kind: OperatorGroup
+apiVersion: operators.coreos.com/v1
+metadata:
+  name: {{ $name | default "default" | quote }}
+  namespace: {{ $namespace | default "default" | quote }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/name: "{{ $name }}-operatorgroup"
+  annotations:
+    {{- include "operator.annotations" . | nindent 4 }}
+    olm.providedAPIs: {{ $providedAPIs | quote }}
+    {{- if .Values.operatorGroup.hooked }}
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-6"
+    helm.sh/hook-delete-policy: hook-failed
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookFailed
+    {{- end }}
+    argocd.argoproj.io/sync-wave: "-6"
+{{- if .Values.operatorGroup.target }}
+  {{- if eq .Values.operatorGroup.target "all-ns" }}
+spec: {}
+  {{- else }}
+  spec: 
+    targetNamespaces:
+      - {{ $namespace | default "default" | quote }}
+  {{- end }}
+{{- else }}
+spec: 
+  targetNamespaces:
+    - {{ $namespace | default "default" | quote }}
+{{- end }}
+{{- end }}{{- end }}{{- end }}

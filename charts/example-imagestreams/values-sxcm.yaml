@@ -1,0 +1,197 @@
+
+
+# Default values for configuration of a dev demo
+# see values.yaml for explanation on each params
+context: 
+ scope: startx
+ cluster: localhost
+ environment: dev
+ component: sxcm
+ app: sxcm-imagestreams
+ version: "0.0.1"
+enabled: true
+imagestreams:
+- name: sxcm-apache
+  enabled: true
+  namespace: "openshift"
+  displayName: SXCM Apache
+  labels: |
+    technology: httpd
+  tags: 
+    - name: dev
+      enabled: true
+      desc: &ist_apache_desc
+        iconClass: icon-apache
+        provider: 'STARTX'
+        displayName: SXCM Apache (dev)
+        description: Http server builder for apache application (dev)
+        tags:  builder,sxcm,dev,apache,httpd
+        supports: httpd
+        version: latest
+        sampleRepo: https://github.com/startxfr/sxcm.git
+      source: &ist_apache_source
+        local: "true"
+        insecure: "false"
+        image: quay.io/startx/apache:fc35
+    - name: test
+      enabled: true
+      desc:
+        <<: *ist_apache_desc
+        displayName: SXCM Apache (test)
+        description: Http server builder for apache application (test)
+        tags:  builder,sxcm,test,apache,httpd
+        version: alpine3
+      source:
+        <<: *ist_apache_source
+        image: quay.io/startx/apache:centos8
+    - name: stable
+      enabled: true
+      desc:
+        <<: *ist_apache_desc
+        displayName: SXCM Apache (stable)
+        description: Http server builder for apache application (stable)
+        tags:  builder,sxcm,stable,apache,httpd
+        version: ubi8
+      source:
+        <<: *ist_apache_source
+        image: quay.io/startx/apache:ubi8
+- name: sxcm-mariadb
+  enabled: true
+  namespace: "openshift"
+  displayName: SXCM MariaDB
+  labels: |
+    technology: mariadb
+  tags: 
+    - name: dev
+      enabled: true
+      desc: &ist_mariadb_desc
+        iconClass: icon-mariadb
+        provider: 'STARTX'
+        displayName: SXCM MariaDB (dev)
+        description: MariaDB server builder for simple SQL database (dev)
+        tags:  builder,sxcm,dev,mariadb,sql
+        supports: mariadb
+        version: latest
+        sampleRepo: https://github.com/startxfr/sxcm.git
+      source: &ist_mariadb_source
+        local: "true"
+        insecure: "false"
+        image: quay.io/startx/mariadb:fc35
+    - name: test
+      enabled: true
+      desc:
+        <<: *ist_mariadb_desc
+        displayName: SXCM MariaDB (test)
+        description: MariaDB server builder for simple SQL database (test)
+        tags:  builder,sxcm,test,mariadb,sql
+        version: alpine3
+      source:
+        <<: *ist_mariadb_source
+        image: quay.io/startx/mariadb:centos8
+    - name: stable
+      enabled: true
+      desc:
+        <<: *ist_mariadb_desc
+        displayName: SXCM MariaDB (stable)
+        description: MariaDB server builder for simple SQL database (stable)
+        tags:  builder,sxcm,stable,mariadb,sql
+        version: ubi8
+      source:
+        <<: *ist_mariadb_source
+        image: quay.io/startx/mariadb:ubi8
+- name: sxcm-nodejs
+  enabled: true
+  namespace: "openshift"
+  displayName: SXCM NodeJS
+  labels: |
+    technology: nodejs
+  tags: 
+    - name: dev
+      enabled: true
+      desc: &ist_nodejs_desc
+        iconClass: icon-nodejs
+        provider: 'STARTX'
+        displayName: SXCM NodeJS (dev)
+        description: Lightweight Http server builder for micro-web application (dev)
+        tags:  builder,sxcm,dev,nodejs,httpd
+        supports: nodejs
+        version: latest
+        sampleRepo: https://github.com/startxfr/sxcm.git
+      source: &ist_nodejs_source
+        local: "true"
+        insecure: "false"
+        image: quay.io/startx/nodejs:fc35
+    - name: test
+      enabled: true
+      desc:
+        <<: *ist_nodejs_desc
+        displayName: SXCM NodeJS (test)
+        description: Lightweight Http server builder for micro-web application (test)
+        tags:  builder,sxcm,test,nodejs,httpd
+        version: alpine3
+      source:
+        local: "true"
+        insecure: "false"
+        <<: *ist_nodejs_source
+        image: quay.io/startx/nodejs:centos8
+    - name: stable
+      enabled: true
+      desc:
+        <<: *ist_nodejs_desc
+        displayName: SXCM NodeJS (stable)
+        description: Lightweight Http server builder for micro-web application (stable)
+        tags:  builder,sxcm,stable,nodejs,httpd
+        version: ubi8
+      source:
+        local: "true"
+        insecure: "false"
+        <<: *ist_nodejs_source
+        image: quay.io/startx/nodejs:ubi8
+- name: sxcm-php
+  enabled: true
+  namespace: "openshift"
+  displayName: SXCM PHP
+  labels: |
+    technology: php
+  tags: 
+    - name: dev
+      enabled: true
+      desc: &ist_php_desc
+        iconClass: icon-php
+        provider: 'STARTX'
+        displayName: SXCM PHP (dev)
+        description: PHP with fpm + apache engine container builder for dynamic web application (dev)
+        tags:  builder,sxcm,dev,php,httpd
+        supports: php
+        version: latest
+        sampleRepo: https://github.com/startxfr/sxcm.git
+      source: &ist_php_source
+        local: "true"
+        insecure: "false"
+        image: quay.io/startx/php:fc35
+    - name: test
+      enabled: true
+      desc:
+        <<: *ist_php_desc
+        displayName: SXCM PHP (test)
+        description: PHP with fpm + apache engine container builder for dynamic web application (test)
+        tags:  builder,sxcm,test,php,httpd
+        version: alpine3
+      source:
+        local: "true"
+        insecure: "false"
+        <<: *ist_php_source
+        image: quay.io/startx/php:centos8
+    - name: stable
+      enabled: true
+      desc:
+        <<: *ist_php_desc
+        displayName: SXCM PHP (stable)
+        description: PHP with fpm + apache engine container builder for dynamic web application (stable)
+        tags:  builder,sxcm,stable,php,httpd
+        version: ubi8
+      source:
+        local: "true"
+        insecure: "false"
+        <<: *ist_php_source
+        image: quay.io/startx/php:ubi8

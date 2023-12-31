@@ -1,0 +1,113 @@
+{{- if .Values.auth.enabled }}
+{{- $root := . -}}
+{{- $namespace := .Values.auth.namespace | default "openshift-config" -}}
+kind: OAuth
+apiVersion: config.openshift.io/v1
+metadata:
+  name: cluster
+  namespace: "{{- $namespace -}}"
+  labels:
+    {{- include "cluster-auth.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: "cluster-oauth"
+  annotations:
+    {{- include "cluster-auth.annotations" $root | nindent 4 }}
+    helm.sh/resource-policy: keep
+spec:
+  {{- if .Values.auth.tokenMaxAge }}
+  tokenConfig:
+    accessTokenMaxAgeSeconds: {{ .Values.auth.tokenMaxAge | default 86400 }}
+  {{- end -}}
+  {{ if .Values.auth.templates }}
+  templates:
+    {{- with .Values.auth.templates.login }}
+    login:
+      name: "{{- .name | default "default-login" -}}-template"
+    {{- end }}
+    {{- with .Values.auth.templates.errors }}
+    error:
+      name: "{{- .name | default "default-errors" -}}-template"
+    {{- end }}
+    {{- with .Values.auth.templates.providers }}
+    providerSelection:
+      name: "{{- .name | default "default-providers" -}}-template"
+    {{- end }}
+  {{ else }}
+  templates: {}
+  {{ end }} 
+  {{- if .Values.auth.authBackend -}}
+  identityProviders:
+  {{- range .Values.auth.authBackend -}} 
+  {{-  if eq .type "htpasswd" }}
+    - name: "{{- .name | default "default-htpasswd" -}}_auth"
+      type: HTPasswd
+      mappingMethod: claim
+      htpasswd:
+        fileData:
+          name: "{{- .name | default "default-htpasswd" -}}-htpasswd-auth"
+  {{- else if eq .type "ldap" }}
+    - name: "{{- .name | default "default-ldap" -}}_auth"
+      type: LDAP
+      mappingMethod: claim
+      ldap:
+        url: "{{- .ldapURL -}}"
+        {{-  if .ldapInsecure }}
+        insecure: {{ .ldapInsecure }}
+        {{- end -}}
+        {{  if .ldapCA }}
+        ca: 
+          name: "{{- .name | default "default-ldap" -}}-ldap-ca"
+        {{- end -}}
+        {{  if .ldapBindDN }}
+        bindDN: "{{- .ldapBindDN -}}"
+        {{- end -}}
+        {{  if .ldapBindPassword }}
+        bindPassword: 
+          name: "{{- .name | default "default-ldap" -}}-ldap-auth"
+        {{- end -}}
+        {{  with .ldapBindAttributes }}
+        attributes:
+          id:
+            {{- .id | nindent 12 }}
+          email:
+            {{- .email | nindent 12 }}
+          name:
+            {{- .name | nindent 12 }}
+          preferredUsername:
+            {{- .preferredUsername | nindent 12 }}
+        {{- end -}}
+  {{- else if eq .type "oidc" }}
+    - name: "{{- .name | default "default-oidc" -}}_auth"
+      type: OpenID
+      mappingMethod: claim
+      openID:
+        clientID: "{{- .oidcClientID -}}"
+        issuer: "{{- .oidcIssuer -}}"
+        {{-  if .oidcCA }}
+        ca: 
+          name: "{{- .name | default "default-oidc" -}}-oidc-ca"
+        {{- end -}}
+        {{  with .oidcClaims }}
+        claims:
+          email:
+            {{- .email | nindent 12 }}
+          name:
+            {{- .name | nindent 12 }}
+          preferredUsername:
+            {{- .preferredUsername | nindent 12 }}
+          groups:
+            {{- .groups | nindent 12 }}
+        {{- end -}}
+        {{  if .oidcExtraScopes }}
+        extraScopes: 
+          {{- .oidcExtraScopes | nindent 10 }}
+        {{- end -}}
+        {{  if .oidcClientSecret }}
+        clientSecret: 
+          name: "{{- .name | default "default-oidc" -}}-oidc-auth"
+        {{- end -}}
+  {{- end -}}
+  {{ end }}
+  {{- else -}}
+  identityProviders: {}
+  {{- end -}}
+{{- end }}

@@ -1,0 +1,174 @@
+# Default values for configuration of a STARTX cluster
+# see values.yaml for explanation on each params
+context: 
+  scope: mccm
+  cluster: mccm-mgmt
+  environment: mgmt
+  component: machine
+  app: mccm-machine
+
+cluster:
+  id: startx-xyzab
+  region: eu-west-1
+  autoscaler: 
+    enabled: false
+    spec: |
+      podPriorityThreshold: -10 
+      resourceLimits:
+        maxNodesTotal: 20
+        cores:
+          min: 24
+          max: 160
+        memory:
+          min: 80
+          max: 640
+      scaleDown: 
+        enabled: true 
+        delayAfterAdd: 5m 
+        delayAfterDelete: 3m 
+        delayAfterFailure: 30s 
+        unneededTime: 120s 
+
+machineConfigPool: 
+  enabled: false
+  infra: true
+  storage: true
+machineConfig: 
+  enabled: false
+  kubelet_gc_enabled: false
+  kubelet_connectiontimeout_enabled: false
+  kubelet_protectkerneldefaults: false
+  infra_specialconfig: false
+  add_scc_netraw: false
+  add_clusterimageconfig: false
+
+machineHealthCheck:
+  enabled: false
+  list: 
+  - name: master
+    type: master
+    maxUnhealthy: 100%
+    timeouts: 300s
+  - name: infra
+    type: infra
+    maxUnhealthy: 40%
+    timeouts: 300s
+  - name: storage
+    type: storage
+    maxUnhealthy: 40%
+    timeouts: 300s
+  - name: app
+    type: app
+    group: app
+    maxUnhealthy: 0%
+    timeouts: 300s
+
+machineAutoscaler: 
+  enabled: false
+  list: 
+  - name: mgmt1-infra-a
+    type: infra
+    minReplicas: 1
+    maxReplicas: 3
+  - name: mgmt1-infra-b
+    type: infra
+    minReplicas: 1
+    maxReplicas: 3
+  - name: mgmt1-infra-c
+    type: infra
+    minReplicas: 1
+    maxReplicas: 3
+  - name: mgmt1-storage-a
+    type: storage
+    minReplicas: 1
+    maxReplicas: 3
+  - name: mgmt1-storage-b
+    type: storage
+    minReplicas: 1
+    maxReplicas: 2
+  - name: mgmt1-storage-c
+    type: storage
+    minReplicas: 1
+    maxReplicas: 2
+  - name: mgmt1-app-a
+    type: app
+    minReplicas: 0
+    maxReplicas: 3
+  # - name: mgmt1-app-b
+  #   type: worker
+  #   minReplicas: 0
+  #   maxReplicas: 3
+  - name: mgmt1-app-c
+    type: app
+    minReplicas: 0
+    maxReplicas: 3
+
+machineSet: 
+  enabled: false
+  list:
+  - name: mgmt1-infra-a
+    az: a
+    type: infra
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge" # 8cpu, 32Gi
+    volumeSize: 150
+    replicas: 1
+  - name: mgmt1-infra-b
+    az: b
+    type: infra
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge"
+    volumeSize: 150
+    replicas: 1
+  - name: mgmt1-infra-c
+    az: c
+    type: infra
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge"
+    volumeSize: 150
+    replicas: 1
+  - name: mgmt1-storage-a
+    az: a
+    type: storage
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge" # 8cpu, 32Gi
+    volumeSize: 150
+    replicas: 0
+  - name: mgmt1-storage-b
+    az: b
+    type: storage
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge"
+    volumeSize: 150
+    replicas: 0
+  - name: mgmt1-storage-c
+    az: c
+    type: storage
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge"
+    volumeSize: 150
+    replicas: 0
+  - name: mgmt1-app-a
+    az: a
+    type: app
+    group: app
+    ami: ami-0add59eb238c299d5
+    instanceType: "c5a.xlarge" # 4cpu, 8Gi
+    volumeSize: 100
+    replicas: 2
+  - name: mgmt1-app-b
+    az: b
+    type: app
+    group: app
+    ami: ami-0add59eb238c299d5
+    instanceType: "c5a.xlarge"
+    volumeSize: 100
+    replicas: 0
+  - name: mgmt1-app-c
+    az: c
+    type: app
+    group: app
+    ami: ami-0add59eb238c299d5
+    instanceType: "c5a.xlarge"
+    volumeSize: 100
+    replicas: 2

@@ -1,0 +1,35 @@
+# Default values for configuration of a STARTX cluster
+# see values.yaml for explanation on each params
+context: &context
+  scope: startx
+  cluster: default
+  environment: infra
+  component: pipelines
+  app: startx-pipelines
+projectOperator: 
+  enabled: false
+operator:
+  enabled: true
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "openshift-pipelines-operator-rh"
+    namespace: "openshift-operators"
+    version: "v1.11.1"
+    operator: 
+      channel: latest
+      name: openshift-pipelines-operator-rh
+      installPlanApproval: Automatic
+      # csv: openshift-pipelines-operator-rh
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: false
+    hooked: false
+    target: "all-ns" 
+    name: "global-operators"
+    namespace: "openshift-operators"
+    providedAPIs: "Config.v1alpha1.operator.tekton.dev"

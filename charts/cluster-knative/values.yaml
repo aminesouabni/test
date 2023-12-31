@@ -1,0 +1,131 @@
+# Default values for cluster-knative.
+
+# Application deployment context
+context:  &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-knative
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# configuration of the knative-serving service
+kServing:
+  # Enable the deployment of the knative-serving service
+  enabled: false
+  # Activate the manager as a helm hook
+  hooked: true
+  # name of the knative-serving service
+  name: "knative-serving"
+  # configuration of service HA
+  replicas: 2
+# configuration of the knative-eventing service
+kEventing:
+  # Enable the deployment of the knative-eventing service
+  enabled: false
+  # Activate the manager as a helm hook
+  hooked: true
+  # name of the knative-eventing service
+  name: "knative-eventing"
+# configuration of the knative-kafka service
+kKafka:
+  # Enable the deployment of the knative-kafka service
+  enabled: false
+  # Activate the manager as a helm hook
+  hooked: true
+  # name of the knative-kafka service
+  name: "knative-kafka"
+
+
+# Configuration of the project for operator (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+projectOperator: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: false
+    type: namespace
+    name: "openshift-serverless"
+    display_name: Operator SERVERLESS
+    description: SERVERLESS operators configured by startx
+  rbac: 
+    enabled: false
+  networkpolicy: 
+    enabled: false
+  limits: 
+    enabled: false
+  quotas: 
+    enabled: false
+
+# Configuration of the project for knative serving (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+projectKServing: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: false
+    type: namespace
+    name: "knative-serving"
+    display_name: Operator SERVERLESS Serv
+    description: SERVERLESS serving environment configured by startx
+  rbac: 
+    enabled: false
+  networkpolicy: 
+    enabled: false
+  limits: 
+    enabled: false
+  quotas: 
+    enabled: false
+
+# Configuration of the project for knative eventing (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+projectKEventing: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: false
+    type: namespace
+    name: "knative-eventing"
+    display_name: Operator SERVERLESS Event
+    description: SERVERLESS eventing environment configured by startx
+  rbac: 
+    enabled: false
+  networkpolicy: 
+    enabled: false
+  limits: 
+    enabled: false
+  quotas: 
+    enabled: false
+
+# Configuration of the operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "serverless-operator"
+    namespace: "openshift-serverless"
+    version: "v1.29.1"
+    operator: 
+      channel: "stable"
+      name: serverless-operator
+      installPlanApproval: Automatic
+      # csv: serverless-operator
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: true
+    hooked: false
+    target: "all-ns"
+    name: "serverless-operator"
+    namespace: "openshift-serverless"
+    providedAPIs: "KnativeEventing.v1beta1.operator.knative.dev,KnativeKafka.v1beta1.operator.serverless.openshift.io,KnativeServing.v1beta1.operator.knative.dev"

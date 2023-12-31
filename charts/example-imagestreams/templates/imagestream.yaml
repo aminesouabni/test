@@ -1,0 +1,99 @@
+{{- if .Values.enabled }}{{- if .Values.imagestreams }}
+{{- $root := . -}}
+{{ range .Values.imagestreams }} 
+{{- $is := . -}}
+{{- if $is.enabled }}
+---
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  name: {{ $is.name | default "default" | quote }}
+  namespace: {{ $is.namespace | default "openshift" | quote }}
+  annotations:
+    {{- include "example-imagestreams.annotations" $root | nindent 4 }}
+    app.kubernetes.io/name: "{{ $is.name | default "default" }}-imagestreams"
+    openshift.io/display-name: {{ $is.displayName | default "openshift" | quote }}
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
+  labels:
+    {{- include "example-imagestreams.labels" $root | nindent 4 }}
+    {{- if $is.labels }}
+    {{- $is.labels | nindent 4 -}}
+    {{- end }}
+spec:
+  {{- if gt (len $is.tags) 0 }}
+  tags:
+    {{- range $is.tags }} 
+    {{- $ist := . -}}
+    {{- if $ist.enabled }}
+    - name: {{ $ist.name | default "latest" | quote }}
+      annotations:
+        {{- include "example-imagestreams.annotations" $root | nindent 8 }}
+        {{- with $ist.desc }}
+        {{- if .displayName }}
+        openshift.io/display-name: {{ .displayName | default "default image" | quote }}
+        {{- end }}
+        {{- if .description }}
+        description: {{ .description | default "this is a default image that should be defined in your values.yaml file associated to this helm chart" | quote }}
+        {{- end }}
+        {{- if .iconClass }}
+        iconClass: {{ .iconClass | default "icon-openshift" | quote }}
+        {{- end }}
+        {{- if .tags }}
+        tags: {{ .tags | default "startx,default" | quote }}
+        {{- end }}
+        {{- if .supports }}
+        supports: {{ .supports | default "icon-openshift" | quote }}
+        {{- end }}
+        {{- if .sampleRepo }}
+        sampleRepo: {{ .sampleRepo | default "http://github.com/startxfr/helm-repository" | quote }}
+        {{- end }}
+        {{- end }}
+      {{- if $ist.source }}
+      {{- $local := $ist.source.local | default "false" -}}
+      {{- $insecure := $ist.source.insecure | default "false" -}}
+      {{- if $ist.source.kind }}
+      {{- if eq $ist.source.kind "is" }}
+      from:
+        kind: ImageStreamTag
+        name: {{ $ist.source.image | default "fedora:latest" | quote }}
+        {{- if $ist.source.namespace }}
+        namespace: {{ $ist.source.namespace | default "openshift" | quote }}
+        {{- end }}
+      {{- else }}
+      from:
+        kind: DockerImage
+        name: {{ $ist.source.image | default "quay.io/startx/fedora:latest" | quote }}
+      {{- if eq $insecure "true"  }}
+      importPolicy:
+        insecure: true 
+      {{- end }}
+      {{- if eq $local "true"  }}
+      # reference: true
+      referencePolicy:
+        type: Local 
+      {{- end }}
+      {{- end }}
+      {{- else }}
+      from:
+        kind: DockerImage
+        name: {{ $ist.source.image | default "quay.io/startx/fedora:latest" | quote }}
+      {{- if eq $insecure "true"  }}
+      importPolicy:
+        insecure: true 
+      {{- end }}
+      {{- if eq $local "true"  }}
+      # reference: true
+      referencePolicy:
+        type: Local 
+      {{- end }}
+      {{- end }}
+      {{- end }}
+    {{- end }}
+    {{- end }}
+  {{- else }}
+  lookupPolicy:
+    local: false
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}{{- end }}

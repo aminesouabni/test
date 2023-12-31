@@ -1,0 +1,24 @@
+{{- if .Values.auth.enabled -}}
+{{- if .Values.auth.authBackend -}}
+{{- $root := . -}}
+{{- $namespace := .Values.auth.namespace | default "openshift-config" -}}
+{{ range .Values.auth.authBackend }} 
+{{-  if eq .type "ldap" -}}{{-  if .ldapCA -}}
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: "{{- .name | default "default-ldap" -}}-ldap-ca"
+  namespace: "{{- $namespace -}}"
+  labels:
+    {{- include "cluster-auth.labels" $root | nindent 4 }}
+    app.kubernetes.io/name: "{{- .name | default "default-ldap" -}}-ldap-ca-cm"
+  annotations:
+    {{- include "cluster-auth.annotations" $root | nindent 4 }}
+data:
+  ca.crt:  |-
+    {{- .ldapCA | nindent 4 }}
+{{- end }}{{- end }}
+{{ end }}
+{{ end }}
+{{ end }}

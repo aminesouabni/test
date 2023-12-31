@@ -1,0 +1,67 @@
+# Default values for configuration of a STARTX cluster
+# see values.yaml for explanation on each params
+context: &context
+  scope: startx
+  cluster: default
+  environment: infra
+  component: certmanager
+  app: demo-certmanager
+certmanager:
+  enabled: false
+  list:
+    - name: example-manual-demo-certmanager
+      namespace: demo-certmanager
+      kind: manual
+      manual: 
+        spec: |-
+          commonName: example-manual-demo-certmanager.example.com
+          dnsNames:
+          - example-manual-demo-certmanager.example.com
+          issuerRef:
+            kind: ClusterIssuer
+            name: letsencrypt-demo
+          secretName: example-manual-demo-certmanager-tls
+    - name: example-ingress-demo-certmanager
+      namespace: demo-certmanager
+      kind: ingress
+      ingress: 
+        host: example-demo-certmanager.example.com
+        issuer: letsencrypt-demo
+        serviceName: example
+        servicePort: 8080
+clusterIssuer: 
+  enabled: false
+  list:
+    - name: letsencrypt-demo
+      namespace: openshift-certmanager
+      spec: |-
+        acme:
+        email: myemail@corp.com
+        preferredChain: ""
+        privateKeySecretRef:
+          name: letsencrypt-demo-cert
+        server: https://demo-letsencrypt-demo.api.letsencrypt.org/directory
+        solvers:
+        - http01:
+            ingress:
+              class: openshift-default
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: true
+    hooked: false
+    type: namespace
+    name: "demo-certmanager"
+    display_name: "Demo CertManager"
+    requester: startx
+    description: Demo of Cert-Manager configured by STARTX
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: false
+  operatorGroup:
+    enabled: false

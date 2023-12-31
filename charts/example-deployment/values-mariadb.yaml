@@ -1,0 +1,17 @@
+
+# Default values for configuration of a dev demo
+# see values.yaml for explanation on each params
+nameOverride: example-deployment-mariadb
+versionOverride: "0.0.1"
+context: 
+ scope: default
+ cluster: localhost
+ environment: demo
+ component: mariadb
+ app: example-deployment-mariadb
+ version: "0.0.1a"
+image: "quay.io/startx/mariadb:latest"
+command: "/bin/sx-mariadb"
+args: run
+debug: true
+replicas: 1

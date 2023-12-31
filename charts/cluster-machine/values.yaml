@@ -1,0 +1,135 @@
+# Default values for cluster-machine.
+
+# Application deployment context
+context: 
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: startx-infra
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# Configuration of the cluster
+cluster:
+  # The cluster id of the managed cluster
+  id: default-xyzab
+  # Name of the region coresponding to this deployment
+  region: eu-west-1
+  # Configuration of the autoscaling at the cluster level
+  autoscaler: 
+    # Enable the cluster autoscaler
+    enabled: false
+    # List of machineSet to control
+    spec: |
+      podPriorityThreshold: -10 
+      scaleDown: 
+        enabled: true 
+
+# Enable the creation of additionnal machinepool
+machineConfigPool: 
+  # Enable the management of machineconfigurationpool
+  enabled: false
+
+# Enable the configuration of machines
+machineConfig: 
+  # Enable the management of machineconfiguration
+  enabled: false
+  # Enable the configuration for garbage collection
+  kubelet_gc_enabled: false
+  # Enable the configuration for streamingConnectionIdleTimeout
+  kubelet_connectiontimeout_enabled: false
+  # Enable the configuration for protectkerneldefaults
+  kubelet_protectkerneldefaults: false
+  # Enable the creation of a dedicated MachineConfig
+  infra_specialconfig: false
+  # Enable the creation of a dedicated SCC for NET_RAW disable
+  add_scc_netraw: false
+  # Enable the configuration of the image cluster access
+  add_clusterimageconfig: false
+
+
+  
+  
+# List of machineAutoscaler to manage
+machineAutoscaler: 
+  # Enable the management of machineAutoscaler
+  enabled: false
+  # List of machine autoscaler to control
+  list: []
+  #   # the name of this health check
+  # - name: a
+  #   # the minimum amount of replicas for this machine autoscaler
+  #   minReplicas: 1
+  #   # the maximum amount of replicas for this machine autoscaler
+  #   maxReplicas: 12
+
+# List of machineHealthCheck to manage
+machineHealthCheck: 
+  # Enable the management of machineHealthCheck
+  enabled: false
+  # List of machine health check to control
+  list: []
+  #   # the name of this health check
+  # - name: master
+  #   # type of the health check (master or worker)
+  #   type: master
+  #   # Max number of unhealthy node
+  #   maxUnhealthy: 40%
+  #   # Unhealthy condition to check
+  #   unhealthyConditions:
+  #     - type: Ready
+  #       status: Unknown
+  #       timeout: 300s
+  #     - type: Ready
+  #       status: 'False'
+  #       timeout: 300s
+
+
+# List of machineSet to manage
+machineSet: 
+  # Enable the management of machineSet
+  enabled: false
+  # List of machineSet to control
+  list: 
+    # name suffix of the machineset 
+  - name: a-infra
+    # name of the az to use (complete cluster.region)
+    az: a
+    # type of node. should be infra, worker or storage
+    type: infra
+    # name of the ami used for boot (should be available into the cluster region)
+    ami: ami-0add59eb238c299d5
+    # # name of the subnet used for this node
+    # subnet_name: "mgmt-subnet-private1-eu-west-3a"
+    # # id of the subnet used for this node (if no subnetname is given)
+    # subnet_id: "subnet-xxxxxxxxxxxxxxxxx"
+    # type of backend instance
+    instanceType: "m6i.large"
+    # # List of storage devices (if not set, will use volumeSize with default disk)
+    # blockDevices: |-
+    #   - ebs:
+    #       encrypted: true
+    #       iops: 2000
+    #       volumeSize: 500
+    #       volumeType: io1
+    # volume size in Giga
+    volumeSize: 150
+    # volume type (according to the csi backend)
+    volumeType: "gp3"
+    # number of replicas node
+    replicas: 1
+    # List of additionnals labels to add to the machineSet and the node template
+    additionnalsLabels: |-
+      client: cdf
+      env: poc
+    # List of additionnals Taints to add to the machineSet and the node template
+    additionnalsTaints: |-
+      - effect: NoSchedule
+        key: hub.jupyter.org/dedicated
+        value: user

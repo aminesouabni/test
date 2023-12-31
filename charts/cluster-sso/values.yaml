@@ -1,0 +1,125 @@
+# Default values for cluster-sso.
+
+# Application deployment context
+context:  &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-sso
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# Deploy a Keycloak instance
+sso:
+  # Enable the configuration of the Keycloak instance
+  enabled: false
+  # Activate the manager as a helm hook
+  hooked: true
+  # Name of the deployed instance of Redhat-SSOConfig
+  name: default
+  # The applyed Redhat-SSO config specifications
+  spec: |
+    externalAccess:
+      enabled: true
+    instances: 1
+    keycloakDeploymentSpec:
+      imagePullPolicy: Always
+    postgresDeploymentSpec:
+      imagePullPolicy: Always
+# Deploy keycloak realms
+sso_realms:
+  # Enable the configuration of the keycloak realms
+  enabled: false
+  # List of realm to create
+  list:
+    # Realm name
+  - name: "myrealm"
+    # The spec of the myrealm
+    spec: |
+      externalAccess:
+        enabled: true
+      instances: 1
+      keycloakDeploymentSpec:
+        imagePullPolicy: Always
+      postgresDeploymentSpec:
+        imagePullPolicy: Always
+# Deploy keycloak clients
+sso_clients:
+  # Enable the configuration of the keycloak client
+  enabled: false
+  # List of keycloak clients to create
+  list:
+    # Keycloak client name
+  - name: "myapp"
+    # The spec of the client
+    spec: |-
+      client:
+        enabled: true
+        clientAuthenticatorType: client-secret
+        redirectUris:
+          - 'https://myapp.example.com/*'
+        clientId: myapp
+        defaultClientScopes:
+          - openid
+          - profile
+          - email
+        rootUrl: 'https://myapp.example.com'
+        implicitFlowEnabled: false
+        publicClient: false
+        standardFlowEnabled: true
+        protocol: openid-connect
+        webOrigins:
+          - 'https://myapp.example.com/*'
+        protocolMappers: []
+        id: bfb396f5-f14b-4759-b2fe-34a9e797223c
+        directAccessGrantsEnabled: true
+      realmSelector:
+        matchLabels:
+          realm: my-realm
+      scopeMappings: {}
+
+# Configuration of the project (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: false
+    hooked: false
+    type: project
+    name: "startx-sso"
+    display_name: Default SSO
+    description: Redhat-SSO configured by STARTX
+
+# Configuration of the operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "rhsso-operator"
+    namespace: "startx-sso"
+    version: "7.6.1-opr-005"
+    operator: 
+      channel: stable
+      name: rhsso-operator
+      installPlanApproval: Automatic
+      # csv: rhsso-operator
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: true
+    hooked: false
+    name: "startx-sso"
+    namespace: "startx-sso"
+    providedAPIs: "Keycloak.v1alpha1.keycloak.org,KeycloakBackup.v1alpha1.keycloak.org,KeycloakClient.v1alpha1.keycloak.org,KeycloakRealm.v1alpha1.keycloak.org,KeycloakUser.v1alpha1.keycloak.org"
+

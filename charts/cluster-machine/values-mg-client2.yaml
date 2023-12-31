@@ -1,0 +1,178 @@
+# Default values for configuration of a STARTX cluster
+# see values.yaml for explanation on each params
+context: 
+  scope: mccm
+  cluster: mccm-client
+  environment: client
+  component: machine
+  app: mccm-machine
+
+cluster:
+  id: startx-6jhzk
+  region: eu-west-3
+  autoscaler: 
+    enabled: false
+    spec: |
+      podPriorityThreshold: -10 
+      resourceLimits:
+        maxNodesTotal: 20
+        cores:
+          min: 24
+          max: 160
+        memory:
+          min: 80
+          max: 640
+      scaleDown: 
+        enabled: true 
+        delayAfterAdd: 5m 
+        delayAfterDelete: 3m 
+        delayAfterFailure: 30s 
+        unneededTime: 120s 
+
+machineConfigPool:
+  enabled: false
+  infra: true
+  storage: false
+machineConfig: 
+  enabled: false
+  kubelet_gc_enabled: false
+  kubelet_connectiontimeout_enabled: false
+  kubelet_protectkerneldefaults: false
+  infra_specialconfig: false
+  add_scc_netraw: false
+  add_clusterimageconfig: false
+
+machineHealthCheck:
+  enabled: false
+  list: 
+  - name: master
+    type: master
+    maxUnhealthy: 100%
+    timeouts: 300s
+  - name: infra
+    type: infra
+    maxUnhealthy: 40%
+    timeouts: 300s
+  - name: app-big
+    type: app
+    group: app-big
+    maxUnhealthy: 40%
+    timeouts: 300s
+  - name: app-small
+    type: app
+    group: app-small
+    maxUnhealthy: 40%
+    timeouts: 300s
+
+machineAutoscaler: 
+  enabled: false
+  list: 
+  - name: client2-infra-a
+    type: infra
+    minReplicas: 1
+    maxReplicas: 2
+  - name: client2-infra-b
+    type: infra
+    minReplicas: 1
+    maxReplicas: 2
+  - name: client2-infra-c
+    type: infra
+    minReplicas: 1
+    maxReplicas: 2
+  - name: client2-app-small-a
+    type: app
+    minReplicas: 0
+    maxReplicas: 3
+  # - name: client2-app-small-b
+  #   type: worker
+  #   minReplicas: 0
+  #   maxReplicas: 3
+  - name: client2-app-small-c
+    type: app
+    minReplicas: 0
+    maxReplicas: 3
+  - name: client2-app-big-a
+    type: app
+    minReplicas: 0
+    maxReplicas: 2
+  - name: client2-app-big-b
+    type: app
+    minReplicas: 0
+    maxReplicas: 2
+  - name: client2-app-big-c
+    type: app
+    minReplicas: 0
+    maxReplicas: 2
+
+machineSet: 
+  enabled: false
+  list:
+  - name: client2-infra-a
+    az: a
+    type: infra
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge" # 8cpu, 32Gi
+    volumeSize: 120
+    replicas: 1
+  - name: client2-infra-b
+    az: b
+    type: infra
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge"
+    volumeSize: 120
+    replicas: 1
+  - name: client2-infra-c
+    az: c
+    type: infra
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge"
+    volumeSize: 120
+    replicas: 1
+  - name: client2-app-small-a
+    az: a
+    type: app
+    group: app-small
+    ami: ami-0add59eb238c299d5
+    instanceType: "c5a.xlarge" # 4cpu, 8Gi
+    volumeSize: 100
+    replicas: 0
+  - name: client2-app-small-b
+    az: b
+    type: app
+    group: app-small
+    ami: ami-0add59eb238c299d5
+    instanceType: "c5a.xlarge"
+    volumeSize: 100
+    replicas: 0
+  - name: client2-app-small-c
+    az: c
+    type: app
+    group: app-small
+    ami: ami-0add59eb238c299d5
+    instanceType: "c5a.xlarge"
+    volumeSize: 100
+    replicas: 0
+  - name: client2-app-big-a
+    az: a
+    type: app
+    group: app-big
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge"
+    volumeSize: 100
+    replicas: 0
+  - name: client2-app-big-b
+    az: b
+    type: app
+    group: app-big
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge"
+    volumeSize: 100
+    replicas: 0
+  - name: client2-app-big-c
+    az: c
+    type: app
+    group: app-big
+    ami: ami-0add59eb238c299d5
+    instanceType: "m5a.2xlarge"
+    volumeSize: 100
+    replicas: 0

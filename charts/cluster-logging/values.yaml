@@ -1,0 +1,199 @@
+# Default values for cluster-logging.
+
+# Application deployment context
+context:  &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-logging
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# configuration of the logging service
+logging:
+  # Enable the deployment of the logging service
+  enabled: true
+  # Enable the deployment of the logging service into infra nodes
+  infra_enabled: false
+  # Activate the manager as a helm hook
+  hooked: true
+  # set the management state to use
+  managementState: "Managed"
+  # Section for external exposition of elasticsearch
+  expose:
+    # Enable creating the route
+    enabled: false
+    # CACertificate for the elasticsearch. Defined in a secret (see bellow)
+    destinationCACert: |
+      -----BEGIN CERTIFICATE-----
+      place here your elasticsearch certificate. 
+      You can get it with 
+      oc extract secret/elasticsearch \
+      -n openshift-logging --to=. --keys=admin-ca && \
+      cat admin-ca
+      -----END CERTIFICATE-----
+  # configuration of the elasticsearch service
+  elasticsearch:
+    # Enable the deployment of the elasticsearch service
+    enabled: true
+    # number of elasticsearch instances
+    replicas: 3
+    # Resource spec for elasticsearch pods
+    resources:
+      limits:
+        cpu: 1
+        memory: 500Mi
+      requests:
+        cpu: 500m
+        memory: 100Mi
+    # configuration of the storage
+    storage: 
+      # name of the storageclass to use
+      class: gp3-csi
+      # the size of the storage to provision
+      size: "200G"
+  # configuration of the kibana service
+  kibana:
+    # Enable the deployment of the kibana service
+    enabled: true
+    # number of kibana instances
+    replicas: 3
+    # Resource spec for kibana pods
+    resources:
+      limits:
+        cpu: 1
+        memory: 500Mi
+      requests:
+        cpu: 500m
+        memory: 100Mi
+  # configuration of the curation service
+  curation:
+    # Enable the deployment of the curation service
+    enabled: true
+    # Configuration the schedulling of curator
+    schedule: "30 3 * * *"
+    # # Resource spec for curation pods
+    # resources:
+    #   requests:
+    #     cpu: "100m"
+  # configuration of the fluentd service
+  fluentd:
+    # Enable the deployment of the fluentd service
+    enabled: true
+    # # Resource spec for fluentd pods
+    # resources:
+    #   requests:
+    #     cpu: "100m"
+
+# configuration of the eventrouter service
+eventrouter:
+  # Enable the deployment of the eventrouter service
+  enabled: false
+  # number of eventrouter instances
+  replicas: 1
+  # Resource spec for eventrouter pods
+  resources:
+    limits:
+      cpu: 400m
+      memory: 512Mi
+    requests:
+      cpu: "100m"
+      memory: 128Mi
+
+# configuration of the logforwarder service
+logforwarder:
+  # Enable the deployment of the logforwarder service
+  enabled: false
+  # spec of the og forwarder
+  spec: |
+    pipelines: 
+    - name: all-to-default
+      inputRefs:
+      - infrastructure
+      - application
+      - audit
+      outputRefs:
+      - default
+
+# Configuration of the project (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: false
+    type: namespace
+    name: "logging-operator"
+    display_name: Operator LOGGING
+    description: LOGGING operators configured by startx
+  rbac: 
+    enabled: false
+    groups: 
+    - id: devops-view
+      name: devops
+      role: view
+    - id: ops-admin
+      name: ops
+      role: admin
+  networkpolicy: 
+    enabled: false
+  limits: 
+    enabled: false
+  quotas: 
+    enabled: false
+
+# Configuration of the operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operator:
+  subscription:
+    enabled: true
+    name: "cluster-logging"
+    namespace: "openshift-logging"
+    version: "5.7.4"
+    operator: 
+      channel: "stable"
+      name: cluster-logging
+      installPlanApproval: Automatic
+      # csv: cluster-logging
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: true
+    hooked: false
+    name: "openshift-logging"
+    namespace: "openshift-logging"
+    providedAPIs: "ClusterLogForwarder.v1.logging.openshift.io,ClusterLogging.v1.logging.openshift.io"
+
+
+# Configuration of the elasticSearch operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operatorElastic:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "elasticsearch-operator"
+    namespace: "openshift-operators-redhat"
+    version: "5.7.4"
+    operator: 
+      channel: "stable"
+      name: elasticsearch-operator
+      installPlanApproval: Automatic
+      # csv: elasticsearch-operator
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: true
+    hooked: false
+    target: "all-ns"
+    name: "elasticsearch-operator"
+    namespace: "openshift-operators-redhat"
+    providedAPIs: "Elasticsearch.v1.logging.openshift.io,Kibana.v1.logging.openshift.io"

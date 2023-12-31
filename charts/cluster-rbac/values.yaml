@@ -1,0 +1,32 @@
+# Default values for cluster-rbac.
+
+# Application deployment context
+context: 
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: startx-rbac
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# # Create groups if enabled
+# groups:
+#   # Enable the cluster groups creation
+#   enabled: false
+#   # List group to create
+#   list: 
+#   # Developper ID
+#   - id: mygroup
+#     # Developper name
+#     name: mygroup_example
+#     # Developper cluster role
+#     role: basic-user
+#     # user enrolled in this group
+#     users: 
+#     - myuser_example

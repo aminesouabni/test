@@ -1,0 +1,55 @@
+apiVersion: v2
+# Name of this Helm chart
+name: example-couchbase
+# Description of this Helm chart
+description: Helm chart used to deploy an example of a simple micro-service using the couchbase backend helm chart.
+# Helm chart application
+type: application
+# Version of this helm chart (see https://github.com/startxfr/helm-repository/blob/dev/README.md for helm chart release guidelines)
+version: 12.36.69-noschema
+# Version name of this application (see https://github.com/startxfr/helm-repository/blob/dev/README.md for helm chart release history)
+appVersion: 4.12.0
+# Icon of this helm-chart
+icon: https://helm-repository.readthedocs.io/en/latest/img/example-couchbase.svg
+# category associated to this package
+category: example
+# tags
+tags: infra,example,couchbase
+# Kube minimum version
+kubeVersion: ">=1.21.0-0"
+# Keyword list for this chart
+keywords: 
+  - kubernetes
+  - helm
+  - startx
+  - example-chart
+  - example
+  - caas
+  - couchbase
+  - nodejs
+  - framework
+  - api
+  - sxapi
+# STARTX helm chart repository homepage
+home: https://helm-repository.readthedocs.io/en/latest
+# Sources and documentation for this chart
+sources:
+  - https://helm-repository.readthedocs.io/en/latest/charts/example-couchbase
+  - https://github.com/startxfr/helm-repository/tree/master/charts/example-couchbase
+# Main maintainer contact for this helm chart
+maintainers: 
+  - name: "STARTX"
+    email: "dev@startx.fr"
+    url: "https://www.startx.fr"
+
+dependencies:
+  - name: sxapi
+    repository: https://helm-repository.readthedocs.io/en/latest/packages/
+    version: "12.36.65-noschema"
+    alias: couchbase
+
+annotations:
+  artifacthub.io/changes: |
+    - kind: changed
+      description: "move dependencies to version 12.36.65"
+  artifacthub.io/containsSecurityUpdates: "false"

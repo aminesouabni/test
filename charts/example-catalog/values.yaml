@@ -1,0 +1,108 @@
+
+
+# # Use it to Overwrite the helm-chart name
+#nameOverride: example-catalog
+# # Use it to Overwrite the helm-chart version
+#versionOverride: "0.0.1"
+
+# Application deployment context
+context: &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: helm
+  # Application name (functionnal tenant, default use Chart name)
+  app: example-catalog
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.1"
+
+demo:
+  storage_context: 
+    <<: *context
+    enabled: false 
+    namespace: demo-storage
+  storage_block: 
+    <<: *context
+    enabled: false 
+    namespace: demo-storage
+  storage_fs: 
+    <<: *context
+    enabled: false 
+    namespace: demo-storage
+  storage_obj: 
+    <<: *context
+    enabled: false 
+    namespace: demo-storage
+  storage_odf_context:
+    <<: *context
+    enabled: false 
+    namespace: demo-storage
+    namespace_odf: openshift-storage
+  storage_odf_apps:
+    <<: *context
+    enabled: false 
+    namespace: demo-storage
+  taintoleration:
+    <<: *context
+    enabled: false 
+    namespace: demo-taintoleration
+  yaml: 
+    <<: *context
+    enabled: false 
+    namespace: demo-yaml
+  hugo: 
+    <<: *context
+    enabled: false 
+    namespace: demo-hugo
+  affinity: 
+    <<: *context
+    enabled: false 
+    namespace: demo-affinity
+  priority: 
+    <<: *context
+    enabled: false 
+    namespace: demo-priority
+  s2i: 
+    <<: *context
+    enabled: false 
+    namespace: demo-s2i
+  elasticsearch: 
+    <<: *context
+    enabled: false 
+    namespace: demo-elastic 
+  automation: 
+    <<: *context
+    enabled: false 
+    enabledOperator: true 
+    enabledController: true 
+    enabledBackup: false 
+    namespace: demo-automation 
+  kubevirt: 
+    <<: *context
+    enabled: false 
+    namespace: demo-kubevirt
+  keycloak: 
+    <<: *context
+    enabled: false 
+    namespace: demo-keycloak
+  vault: 
+    <<: *context
+    enabled: false 
+    namespace: demo-vault
+  istio: 
+    <<: *context
+    enabled: false
+    namespace: demo-istio
+    namespaceIstio: startx-istio
+  sxapi_build: 
+    <<: *context
+    enabled: false 
+    namespace: demo-sxapi
+  sxapi_knative: 
+    <<: *context
+    enabled: false 
+    namespace: demo-sxapi 

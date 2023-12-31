@@ -1,0 +1,52 @@
+{{- if .Values.enabled }}{{- if .Values.subscription }}{{- if .Values.subscription.enabled }}
+{{- $name := .Values.subscription.name -}}
+{{- $namespace := .Values.subscription.namespace -}}
+{{- $version := .Values.subscription.version | default (include "startx.appVersion" .) -}}
+---
+kind: Subscription
+apiVersion: operators.coreos.com/v1alpha1
+metadata:
+  name: {{ $name | default "default" | quote }}
+  namespace: {{ $namespace | default "default" | quote }}
+  labels:
+    {{- include "operator.labels" . | nindent 4 }}
+    app.kubernetes.io/name: "{{ $name }}-subscription"
+  annotations:
+    {{- include "operator.annotations" . | nindent 4 }}
+    {{- if .Values.subscription.hooked }}
+    helm.sh/hook: pre-install,pre-upgrade
+    helm.sh/hook-weight: "-5"
+    helm.sh/hook-delete-policy: hook-failed
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookFailed
+    {{- end }}
+    argocd.argoproj.io/sync-wave: "-5"
+spec:
+  {{- with .Values.subscription.operator }}
+  installPlanApproval: {{ .installPlanApproval | default "Automatic" | quote }}
+  channel: {{ .channel | default "latest" | quote }}
+  name: {{ .name | default $name | quote }}
+  {{- with .source }}
+  source: {{ .name | default "redhat-operators" | quote }}
+  sourceNamespace: {{ .namespace | default "openshift-marketplace" | quote }}
+  {{- end }}
+  {{- with .csv }}
+  startingCSV: "{{ . }}.{{ $version | default "v0.1.0" }}"
+  {{- end }}
+  {{- if .config }}
+  config:
+  {{- if .config.infra }}
+    nodeSelector:
+      node-role.kubernetes.io/infra: ''
+    tolerations:
+      - effect: NoSchedule
+        key: node-role.kubernetes.io/infra
+        operator: Exists
+  {{- end }}{{- /* end condition line 36 */ -}}
+  {{- if .config.env }}
+    env:
+      {{- .config.env | toYaml | nindent 6 }}
+  {{- end }}{{- /* end condition line 44 */ -}}
+  {{- end }}{{- /* end condition line 34 */ -}}
+  {{- end }}{{- /* end condition line 26 */ -}}
+{{- end }}{{- end }}{{- end }}

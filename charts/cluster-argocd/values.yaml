@@ -1,0 +1,214 @@
+# Default values for cluster-argocd.
+
+# Application deployment context
+context: &context
+  # Name of the global scope for this application (organisational tenant)
+  scope: myscope
+  # Name of the cluster running this application (plateform tenant)
+  cluster: default
+  # Name of the environement for this application (ex: dev, factory, preprod or prod)
+  environment: myenv
+  # Component name of this application (logical tenant)
+  component: mycomponent
+  # Application name (functionnal tenant, default use Chart name)
+  app: default-argocd
+  # Version name of this application (default use Chart appVersion)
+  # version: "0.0.3"
+
+# Configuration of the argocd cluster
+argocd:
+  # enable deployment of the argocd cluster
+  enabled: false
+  # Activate the manager as a helm hook
+  hooked: true
+  # name of the argocd cluster
+  name: "openshift-gitops"
+
+# Configuration of secrets to access various private repository used in argocd applications
+# Read https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/ for more 
+# informations on how to setup theses resources
+argocd_repocreds:
+  # enable deployment of repository credentials
+  enabled: false
+  # List of repository credentials to create
+  list: 
+      # Name of the export configuration
+    - name: "startx-customers-pragmatik-repo-creds"
+      # Short name for ArgoCD reading
+      shortname: "pragmatik-repo"
+      # Namespace of the export configuration
+      namespace: "openshift-gitops"
+      # URL of the repository (or path if used for multiple repository)
+      url: "https://github.com/argoproj/private-repo"
+      # Credentials type for this secret (should be https, ssh or githubapp)
+      type: "ssh"
+      # Is the connection must be SSL checked
+      insecure: true
+      # Options if credentials type is https
+      httpsOptions: 
+        # Username to use for http authentication
+        username: "my-username"
+        # password coresponding to the username
+        password: "my-password"
+      # Options if credentials type is ssh
+      sshOptions: 
+        # The privateKey to use for ssh connection to the remote repository
+        sshPrivateKey: |-
+          -----BEGIN OPENSSH PRIVATE KEY-----
+          ...
+          -----END OPENSSH PRIVATE KEY-----
+      # Options if credentials type is githubapp
+      githubappOptions: 
+        # The application ID
+        githubAppID: 1
+        # The install application ID
+        githubAppInstallationID: 2
+        # The privateKey to use for ssh connection to the remote repository
+        githubAppPrivateKey: |-
+          -----BEGIN OPENSSH PRIVATE KEY-----
+          ...
+          -----END OPENSSH PRIVATE KEY-----
+    
+
+# Configuration of the argocd export
+argocd_export:
+  # enable deployment of export
+  enabled: false
+  # List of export to configure
+  list: 
+      # Name of the export configuration
+    - name: "example-export"
+      # Namespace of the export configuration
+      namespace: "openshift-gitops"
+      # name of the argocd instance to export
+      argocd: "openshift-gitops"
+      # Rythm of the export creation
+      schedule: "0 * * * *"
+      # Storage class used for the PVC creation of the export
+      storageclass: "gp3-csi"
+
+# Configuration of the argocd argocd_project
+argocd_project:
+  # enable deployment of argocd_project
+  enabled: false
+  # List of argocd_project to configure
+  list: 
+      # Name of the argocd_project configuration
+    - name: "default"
+      # Namespace of the argocd_project configuration
+      namespace: "default"
+
+# Configuration of VM to deploy
+application:
+  # enable deployment of application
+  enabled: false
+  # List of application to deploy
+  list: 
+      # Name of the application to configure
+    - name: "example-application"
+      # Namespace where to deploy this application (default is project)
+      namespace: "openshift-gitops"
+      # enable argocd finalizer for this application
+      finalizer: true
+      # name of the destination server (default is https://kubernetes.default.svc) 
+      server: "https://kubernetes.default.svc"
+      # name of the parent project (default is cluster-admin) 
+      project: "cluster-admin"
+      # Application source
+      source: 
+        # repository URL to the application code (default is https://github.com/startxfr/helm-repository.git)
+        repo: "https://github.com/startxfr/helm-repository.git"
+        # revision to use for this source-code (default is master) 
+        rev: "stable"
+        # path to the application code (default is charts/example-html/)
+        path: "charts/example-html/"
+      # Configuration of the helm chart
+      helm: | 
+        valueFiles:
+          - values.yaml
+        parameters:
+          - name: context.scope
+            value: "myscope"
+          - name: context.cluster
+            value: "mycluster"
+          - name: context.environment
+            value: "myenv"
+          - name: context.version
+            value: "0.0.1-devel"
+          - name: context.app
+            value: "exemple-html-helm"
+          - name: html.expose.enabled
+            value: "true"
+          - name: html.namespace
+            value: "default"
+      # Configuration of the syncPolicy property
+      syncPolicy: | 
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=false
+          - Validate=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 60s
+      # Configuration of the ignoreDifferences list
+      ignoreDifferences: | 
+        - group: "apps"
+          kind: Secret
+          namespace: "default"
+          jsonPointers:
+            - /
+
+
+# Configuration of the project (see https://helm-repository.readthedocs.io/en/latest/charts/project)
+project: 
+  enabled: false
+  context: 
+    <<: *context
+  project: 
+    enabled: true
+    type: namespace
+    name: openshift-gitops
+    display_name: "Openshift GITOPS"
+    requester: startx
+    description: ArgoCD and gitops features configured by STARTX
+  rbac: 
+    enabled: false
+  networkpolicy: 
+    enabled: false
+    rules: []
+  limits: 
+    enabled: false
+  quotas: 
+    enabled: false
+
+# Configuration of the operator (see https://helm-repository.readthedocs.io/en/latest/charts/operator)
+operator:
+  enabled: false
+  context: 
+    <<: *context
+  subscription:
+    enabled: true
+    hooked: false
+    name: "openshift-gitops-operator"
+    namespace: "openshift-operators"
+    version: "v1.5.6"
+    operator: 
+      channel: "stable"
+      name: openshift-gitops-operator
+      # csv: openshift-gitops-operator
+      installPlanApproval: Automatic
+      source: 
+        name: redhat-operators
+        namespace: openshift-marketplace
+  operatorGroup:
+    enabled: false
+    hooked: false
+    name: "gitops"
+    target: "all-ns"
+    namespace: "openshift-operators"
+    providedAPIs: "AppProject.v1alpha1.argoproj.io,Application.v1alpha1.argoproj.io,ApplicationSet.v1alpha1.argoproj.io,ArgoCD.v1alpha1.argoproj.io,GitopsService.v1alpha1.pipelines.openshift.io"
